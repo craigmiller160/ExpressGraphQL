@@ -1,0 +1,7 @@
+{
+  "name": "ExpressGraphQL",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "Craig Miller <craigmiller160@gmail.com>",
+  "license": "MIT"
+}
