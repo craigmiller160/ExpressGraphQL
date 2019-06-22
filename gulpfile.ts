@@ -33,7 +33,7 @@ gulp.task('start', () => {
         watch: ['src'],
         env: {
             NODE_ENV: 'development',
-            port: '8080'
+            PORT: '8080'
         }
     })
 });

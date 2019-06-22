@@ -33,7 +33,8 @@ app.use('/graphql', graphqlHttp({
             const eventName = args.name;
             return eventName;
         }
-    }
+    },
+    graphiql: true
 }));
 
 app.listen(port);
