@@ -5,10 +5,8 @@
   "author": "Craig Miller <craigmiller160@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "start": "npm run build && node out/app.js",
-    "start:live": "npm run build:live",
-    "build": "gulp compile",
-    "build:live": "nodemon --watch 'src/**/*.ts' --exec 'gulp' compile"
+    "start": "gulp start",
+    "build": "gulp compile"
   },
   "dependencies": {
     "express": "^4.17.1",
