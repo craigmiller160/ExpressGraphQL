@@ -6,7 +6,10 @@
   "jsRules": {},
   "rules": {
     "ordered-imports": false,
-    "quotemark": [ true, "single" ]
+    "quotemark": [ true, "single" ],
+    "object-literal-sort-keys": false,
+    "no-trailing-whitespace": [true, "ignore-template-strings"],
+    "trailing-comma": [ true, { "multiline": "never", "singleline": "never" } ]
   },
   "rulesDirectory": []
 }

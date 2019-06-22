@@ -18,13 +18,16 @@ gulp.task('tslint', () => {
         .pipe(tslint({
             formatter: 'verbose'
         }))
-        .pipe(tslint.report());
+        .pipe(tslint.report({
+            emitError: false
+        }));
 });
 
 gulp.task('start', () => {
     return nodemon({
         script: 'out/app.js',
         tasks: [
+            'tslint',
             'compile'
         ],
         watch: ['src'],
