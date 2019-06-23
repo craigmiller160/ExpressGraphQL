@@ -28,6 +28,8 @@ const mongoAuthDb: string = process.env.MONGO_AUTH_DB;
 const mongoDb: string = process.env.MONGO_DB;
 const saltRounds: number = Number(process.env.SALT_ROUNDS);
 
+let defaultUserId: string;
+
 const app: Express = express();
 
 app.use(bodyParser.json());
@@ -47,6 +49,7 @@ app.use('/graphql', graphqlHttp({
             _id: ID!
             email: String!
             password: String
+            createdEvents: [String!]!
         }
         
         input EventInput {
@@ -79,7 +82,7 @@ app.use('/graphql', graphqlHttp({
     rootValue: {
         events: async (): Promise<IEvent[]> => {
             try {
-                const events = await EventModel.find();
+                const events: IEventModel[] = await EventModel.find();
                 return events.map(cleanMongooseDoc);
             } catch (ex) {
                 console.log(ex); // tslint:disable-line no-console
@@ -87,21 +90,26 @@ app.use('/graphql', graphqlHttp({
             }
         },
         createEvent: async ({ eventInput }: ICreateEventArgs): Promise<IEvent> => {
+            if (!defaultUserId) {
+                throw new Error('Cannot create an event until the default User ID is set');
+            }
+
             try {
+                const userResult: IUserModel = await UserModel.findById(defaultUserId);
+                if (!userResult) {
+                    throw new Error('Could not find user who created event');
+                }
+
                 const event = new EventModel({
                     title: eventInput.title,
                     description: eventInput.description,
                     price: +eventInput.price,
                     date: new Date(eventInput.date),
-                    creator: '5d0fb00b1fd7121711ea36f6'
+                    creator: userResult._doc._id
                 });
 
                 const eventResult: IEventModel = await event.save();
-                const userResult: IUserModel = await UserModel.findById('5d0fb00b1fd7121711ea36f6');
-                if (userResult) {
-                    throw new Error('Could not find user who created event');
-                }
-                userResult.createdEvents.push(eventResult._id.toString());
+                userResult.createdEvents.push(eventResult._doc._id.toString());
                 await userResult.save();
                 return cleanMongooseDoc(eventResult);
             } catch (ex) {
@@ -111,7 +119,7 @@ app.use('/graphql', graphqlHttp({
         },
         users: async (): Promise<IUser[]> => {
             try {
-                const users = await UserModel.find();
+                const users: IUserModel[] = await UserModel.find();
                 return users.map((user) => ({
                     ...cleanMongooseDoc(user),
                     password: null
@@ -123,20 +131,23 @@ app.use('/graphql', graphqlHttp({
         },
         createUser: async ({ userInput }: ICreateUserArgs): Promise<IUser> => {
             try {
-                const existingUser = await UserModel.findOne({
+                const existingUser: IUserModel = await UserModel.findOne({
                     email: userInput.email
                 });
                 if (existingUser) {
                     throw new Error(`User exists already: ${userInput.email}`);
                 }
 
-                const passwordHash = await bcrypt.hash(userInput.password, saltRounds);
-                const user = new UserModel({
+                const passwordHash: string = await bcrypt.hash(userInput.password, saltRounds);
+                const user: IUserModel = new UserModel({
                     email: userInput.email,
                     password: passwordHash
                 });
 
                 const result: IUserModel = await user.save();
+                if (!defaultUserId) {
+                    defaultUserId = result._doc._id.toString();
+                }
                 return {
                     ...cleanMongooseDoc(result),
                     password: null
@@ -160,6 +171,10 @@ app.use('/graphql', graphqlHttp({
         await mongoose.connect(trimWhitespace(mongoConnectionString), {
             useNewUrlParser: true
         });
+        const userResult: IUserModel = await UserModel.findOne();
+        if (userResult) {
+            defaultUserId = userResult._doc._id.toString();
+        }
         app.listen(port);
     } catch (ex) {
         console.log(ex); // tslint:disable-line no-console
