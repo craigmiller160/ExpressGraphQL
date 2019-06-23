@@ -34,6 +34,22 @@ const app: Express = express();
 
 app.use(bodyParser.json());
 
+const getUser = async (userId: string): Promise<IUser> => {
+    const userResult = await UserModel.findById(userId);
+    return {
+        ...cleanMongooseDoc(userResult),
+        createdEvents: getEvents.bind(this, userResult._doc.createdEvents as string[])
+    };
+};
+
+const getEvents = async (eventIds: string[]): Promise<IEvent[]> => {
+    const eventsResult = await EventModel.find({ _id: { $in: eventIds } });
+    return eventsResult.map((event) => ({
+        ...cleanMongooseDoc(event),
+        creator: undefined
+    }));
+};
+
 app.use('/graphql', graphqlHttp({
     schema: buildSchema(`
         type Event {
@@ -42,14 +58,14 @@ app.use('/graphql', graphqlHttp({
             description: String!
             price: Float!
             date: String!
-            creator: String!
+            creator: User!
         }
         
         type User {
             _id: ID!
             email: String!
             password: String
-            createdEvents: [String!]!
+            createdEvents: [Event!]!
         }
         
         input EventInput {
@@ -83,7 +99,11 @@ app.use('/graphql', graphqlHttp({
         events: async (): Promise<IEvent[]> => {
             try {
                 const events: IEventModel[] = await EventModel.find();
-                return events.map(cleanMongooseDoc);
+                return events.map((event) => ({
+                    ...cleanMongooseDoc(event),
+                    creator: getUser.bind(this, event._doc.creator as string)
+                }));
+
             } catch (ex) {
                 console.log(ex); // tslint:disable-line no-console
                 throw ex;
