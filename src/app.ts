@@ -10,7 +10,10 @@ interface ICreateEventArgs {
     eventInput: IEventInput;
 }
 
-const port: number = Number(process.env.PORT) || 3000;
+const port: number = Number(process.env.PORT);
+const mongoUser: string = process.env.MONGO_USER;
+const mongoPass: string = process.env.MONGO_PASSWORD;
+const mongoAuthDb: string = process.env.MONGO_AUTH_DB;
 
 const app: Express = express();
 
@@ -68,10 +71,7 @@ app.use('/graphql', graphqlHttp({
     graphiql: true
 }));
 
-const user: string = process.env.MONGO_USER;
-const pass: string = process.env.MONGO_PASSWORD;
-
-mongoose.connect(`mongodb://${user}:${pass}@localhost:27017/express_graphql?authSource=admin`, {
+mongoose.connect(`mongodb://${mongoUser}:${mongoPass}@localhost:27017/express_graphql?authSource=${mongoAuthDb}`, {
     useNewUrlParser: true
 });
 
