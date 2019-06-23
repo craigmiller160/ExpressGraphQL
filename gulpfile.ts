@@ -30,6 +30,10 @@ gulp.task('start', () => {
             'tslint',
             'compile'
         ],
+        ignore: [
+            '.git/',
+            'node_modules/'
+        ],
         watch: ['src/'],
         ext: 'ts',
         env: {
