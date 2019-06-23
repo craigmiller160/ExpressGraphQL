@@ -3,14 +3,22 @@ import bodyParser from 'body-parser';
 import graphqlHttp from 'express-graphql';
 import { buildSchema } from 'graphql';
 import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
 import IEvent from './ts-types/Event.type';
 import IEventInput from './ts-types/EventInput.type';
 import trimWhitespace from './util/trimWhitespace';
 import EventModel, { IEventModel } from './models/Event';
+import UserModel, { IUserModel } from './models/User';
 import cleanMongooseDoc from './util/cleanMongooseDoc';
+import IUserInput from './ts-types/UserInput.type';
+import IUser from './ts-types/User.type';
 
 interface ICreateEventArgs {
     eventInput: IEventInput;
+}
+
+interface ICreateUserArgs {
+    userInput: IUserInput;
 }
 
 const port: number = Number(process.env.PORT);
@@ -18,6 +26,7 @@ const mongoUser: string = process.env.MONGO_USER;
 const mongoPass: string = process.env.MONGO_PASSWORD;
 const mongoAuthDb: string = process.env.MONGO_AUTH_DB;
 const mongoDb: string = process.env.MONGO_DB;
+const saltRounds: number = Number(process.env.SALT_ROUNDS);
 
 const app: Express = express();
 
@@ -33,19 +42,32 @@ app.use('/graphql', graphqlHttp({
             date: String!
         }
         
+        type User {
+            _id: ID!
+            email: String!
+            password: String
+        }
+        
         input EventInput {
             title: String!
             description: String!
             price: Float!
             date: String!
         }
+        
+        input UserInput {
+            email: String!
+            password: String!
+        }
     
         type RootQuery {
             events: [Event!]!
+            users: [User!]!
         }
         
         type RootMutation {
             createEvent(eventInput: EventInput): Event
+            createUser(userInput: UserInput): User
         }
     
         schema {
@@ -57,22 +79,46 @@ app.use('/graphql', graphqlHttp({
         events: async (): Promise<IEvent[]> => {
             try {
                 const events = await EventModel.find();
-                return events.map((event) => cleanMongooseDoc(event));
+                return events.map(cleanMongooseDoc);
             } catch (ex) {
                 console.log(ex); // tslint:disable-line no-console
                 throw ex;
             }
         },
-        createEvent: async (args: ICreateEventArgs): Promise<IEvent> => {
-            const { eventInput } = args;
-            const event = new EventModel({
-                title: eventInput.title,
-                description: eventInput.description,
-                price: +eventInput.price,
-                date: new Date(eventInput.date)
-            });
+        createEvent: async ({ eventInput }: ICreateEventArgs): Promise<IEvent> => {
             try {
+                const event = new EventModel({
+                    title: eventInput.title,
+                    description: eventInput.description,
+                    price: +eventInput.price,
+                    date: new Date(eventInput.date)
+                });
+
                 const result: IEventModel = await event.save();
+                return cleanMongooseDoc(result);
+            } catch (ex) {
+                console.log(ex); // tslint:disable-line no-console
+                throw ex;
+            }
+        },
+        users: async (): Promise<IUser[]> => {
+            try {
+                const users = await UserModel.find();
+                return users.map(cleanMongooseDoc);
+            } catch (ex) {
+                console.log(ex); // tslint:disable-line no-console
+                throw ex;
+            }
+        },
+        createUser: async ({ userInput }: ICreateUserArgs): Promise<IUser> => {
+            try {
+                const passwordHash = await bcrypt.hash(userInput.password, saltRounds);
+                const user = new UserModel({
+                    email: userInput.email,
+                    password: passwordHash
+                });
+
+                const result: IUserModel = await user.save();
                 return cleanMongooseDoc(result);
             } catch (ex) {
                 console.log(ex); // tslint:disable-line no-console

@@ -1,8 +1,9 @@
-import { Schema, Document, model } from 'mongoose';
+import { model, Schema } from 'mongoose';
 import IUser from '../ts-types/User.type';
 import { EVENT_MODEL, USER_MODEL } from './ModelNames';
+import IExtendedDocument from '../ts-types/ExtendedDocument.type';
 
-export interface IUserModel extends IUser, Document {}
+export interface IUserModel extends IUser, IExtendedDocument<IUser> {}
 
 const userSchema: Schema<IUserModel> = new Schema({
     email: {

@@ -37,7 +37,8 @@ gulp.task('start', () => {
             MONGO_USER: 'user',
             MONGO_PASSWORD: 'password',
             MONGO_AUTH_DB: 'admin',
-            MONGO_DB: 'express_graphql'
+            MONGO_DB: 'express_graphql',
+            SALT_ROUNDS: '12'
         }
     })
 });
