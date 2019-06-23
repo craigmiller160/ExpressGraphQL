@@ -40,6 +40,7 @@ app.use('/graphql', graphqlHttp({
             description: String!
             price: Float!
             date: String!
+            creator: String!
         }
         
         type User {
@@ -91,11 +92,18 @@ app.use('/graphql', graphqlHttp({
                     title: eventInput.title,
                     description: eventInput.description,
                     price: +eventInput.price,
-                    date: new Date(eventInput.date)
+                    date: new Date(eventInput.date),
+                    creator: '5d0fb00b1fd7121711ea36f6'
                 });
 
-                const result: IEventModel = await event.save();
-                return cleanMongooseDoc(result);
+                const eventResult: IEventModel = await event.save();
+                const userResult: IUserModel = await UserModel.findById('5d0fb00b1fd7121711ea36f6');
+                if (userResult) {
+                    throw new Error('Could not find user who created event');
+                }
+                userResult.createdEvents.push(eventResult._id.toString());
+                await userResult.save();
+                return cleanMongooseDoc(eventResult);
             } catch (ex) {
                 console.log(ex); // tslint:disable-line no-console
                 throw ex;

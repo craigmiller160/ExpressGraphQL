@@ -5,4 +5,5 @@ export default interface IEvent extends IBaseDb {
     description: string;
     price: number;
     date: string | Date;
+    creator: string;
 }
