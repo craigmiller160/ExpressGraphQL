@@ -1,10 +1,11 @@
 import { Schema, model } from 'mongoose';
 import IEvent from '../ts-types/Event.type';
 import IExtendedDocument from '../ts-types/ExtendedDocument.type';
+import { EVENT_MODEL, USER_MODEL } from './ModelNames';
 
 export interface IEventModel extends IEvent, IExtendedDocument<IEvent> {}
 
-const eventSchema: Schema = new Schema({
+const eventSchema: Schema<IEventModel> = new Schema({
     title: {
         type: String,
         required: true
@@ -20,7 +21,11 @@ const eventSchema: Schema = new Schema({
     date: {
         type: Date,
         required: true
+    },
+    creator: {
+        type: Schema.Types.ObjectId,
+        ref: USER_MODEL
     }
 });
 
-export default model<IEventModel>('Event', eventSchema);
+export default model<IEventModel>(EVENT_MODEL, eventSchema);
