@@ -7,6 +7,7 @@ import IEvent from './ts-types/Event.type';
 import IEventInput from './ts-types/EventInput.type';
 import trimWhitespace from './util/trimWhitespace';
 import EventModel, { IEventModel } from './models/Event';
+import cleanMongooseDoc from './util/cleanMongooseDoc';
 
 interface ICreateEventArgs {
     eventInput: IEventInput;
@@ -56,7 +57,7 @@ app.use('/graphql', graphqlHttp({
         events: async (): Promise<IEvent[]> => {
             try {
                 const events = await EventModel.find();
-                return events.map((event) => ({ ...event._doc, _id: event._doc._id.toString() }));
+                return events.map((event) => cleanMongooseDoc(event));
             } catch (ex) {
                 console.log(ex); // tslint:disable-line no-console
                 throw ex;
@@ -72,7 +73,7 @@ app.use('/graphql', graphqlHttp({
             });
             try {
                 const result: IEventModel = await event.save();
-                return { ...result._doc, _id: event._doc._id.toString() };
+                return cleanMongooseDoc(result);
             } catch (ex) {
                 console.log(ex); // tslint:disable-line no-console
                 throw ex;
