@@ -30,7 +30,8 @@ gulp.task('start', () => {
             'tslint',
             'compile'
         ],
-        watch: ['src'],
+        watch: ['src/'],
+        ext: 'ts',
         env: {
             NODE_ENV: 'development',
             PORT: '8080',
