@@ -1,7 +1,8 @@
-export default interface IEvent {
-    _id: any;
+import IBaseDb from './BaseDb.type';
+
+export default interface IEvent extends IBaseDb{
     title: string;
     description: string;
     price: number;
-    date: string;
+    date: string | Date;
 }

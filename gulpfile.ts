@@ -36,7 +36,8 @@ gulp.task('start', () => {
             PORT: '8080',
             MONGO_USER: 'user',
             MONGO_PASSWORD: 'password',
-            MONGO_AUTH_DB: 'admin'
+            MONGO_AUTH_DB: 'admin',
+            MONGO_DB: 'express_graphql'
         }
     })
 });

@@ -6,6 +6,7 @@ import mongoose from 'mongoose';
 import IEvent from './ts-types/Event.type';
 import IEventInput from './ts-types/EventInput.type';
 import trimWhitespace from './util/trimWhitespace';
+import EventModel, { IEventModel } from './models/Event';
 
 interface ICreateEventArgs {
     eventInput: IEventInput;
@@ -15,12 +16,11 @@ const port: number = Number(process.env.PORT);
 const mongoUser: string = process.env.MONGO_USER;
 const mongoPass: string = process.env.MONGO_PASSWORD;
 const mongoAuthDb: string = process.env.MONGO_AUTH_DB;
+const mongoDb: string = process.env.MONGO_DB;
 
 const app: Express = express();
 
 app.use(bodyParser.json());
-
-const events: IEvent[] = [];
 
 app.use('/graphql', graphqlHttp({
     schema: buildSchema(`
@@ -53,20 +53,30 @@ app.use('/graphql', graphqlHttp({
         }
     `),
     rootValue: {
-        events: (): IEvent[] => {
-            return events;
+        events: async (): Promise<IEvent[]> => {
+            try {
+                const events = await EventModel.find();
+                return events.map((event) => ({ ...event._doc, _id: event._doc._id.toString() }));
+            } catch (ex) {
+                console.log(ex); // tslint:disable-line no-console
+                throw ex;
+            }
         },
-        createEvent: (args: ICreateEventArgs): IEvent => {
+        createEvent: async (args: ICreateEventArgs): Promise<IEvent> => {
             const { eventInput } = args;
-            const event: IEvent = {
-                _id: Math.random().toString(),
+            const event = new EventModel({
                 title: eventInput.title,
                 description: eventInput.description,
                 price: +eventInput.price,
-                date: eventInput.date
-            };
-            events.push(event);
-            return event;
+                date: new Date(eventInput.date)
+            });
+            try {
+                const result: IEventModel = await event.save();
+                return { ...result._doc, _id: event._doc._id.toString() };
+            } catch (ex) {
+                console.log(ex); // tslint:disable-line no-console
+                throw ex;
+            }
         }
     },
     graphiql: true
@@ -75,7 +85,7 @@ app.use('/graphql', graphqlHttp({
 (async () => {
     const mongoConnectionString = `mongodb://
             ${mongoUser}:${mongoPass}
-            @localhost:27017/express_graphql
+            @localhost:27017/${mongoDb}
             ?authSource=${mongoAuthDb}`;
 
     try {

@@ -1,7 +1,8 @@
-import { Document, Schema, model } from 'mongoose';
+import { Schema, model } from 'mongoose';
 import IEvent from '../ts-types/Event.type';
+import IExtendedDocument from '../ts-types/ExtendedDocument.type';
 
-export interface IEventModel extends IEvent, Document {}
+export interface IEventModel extends IEvent, IExtendedDocument<IEvent> {}
 
 const eventSchema: Schema = new Schema({
     title: {
@@ -23,4 +24,3 @@ const eventSchema: Schema = new Schema({
 });
 
 export default model<IEventModel>('Event', eventSchema);
-
