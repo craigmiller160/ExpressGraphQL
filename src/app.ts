@@ -2,7 +2,8 @@ import express, { Express } from 'express';
 import bodyParser from 'body-parser';
 import graphqlHttp from 'express-graphql';
 import { buildSchema } from 'graphql';
-import ICreateEvent from './ts-types/createEvent.type';
+import IEvent from './ts-types/Event.type';
+import IEventInput from './ts-types/EventInput.type';
 
 const port: number = Number(process.env.PORT) || 3000;
 
@@ -10,14 +11,31 @@ const app: Express = express();
 
 app.use(bodyParser.json());
 
+const events: IEvent[] = [];
+
 app.use('/graphql', graphqlHttp({
     schema: buildSchema(`
+        type Event {
+            _id: ID!
+            title: String!
+            description: String!
+            price: Float!
+            date: String!
+        }
+        
+        input EventInput {
+            title: String!
+            description: String!
+            price: Float!
+            date: String!
+        }
+    
         type RootQuery {
-            events: [String!]!
+            events: [Event!]!
         }
         
         type RootMutation {
-            createEvent(name: String): String
+            createEvent(eventInput: EventInput): Event
         }
     
         schema {
@@ -26,12 +44,20 @@ app.use('/graphql', graphqlHttp({
         }
     `),
     rootValue: {
-        events: (): string[] => {
-            return ['Romantic Cooking', 'Sailing', 'All-Night Coding'];
+        events: (): IEvent[] => {
+            return events;
         },
-        createEvent: (args: ICreateEvent): string => {
-            const eventName = args.name;
-            return eventName;
+        createEvent: (args: { eventInput: IEventInput }): IEvent => {
+            const { eventInput } = args;
+            const event: IEvent = {
+                _id: Math.random().toString(),
+                title: eventInput.title,
+                description: eventInput.description,
+                price: +eventInput.price,
+                date: eventInput.date
+            };
+            events.push(event);
+            return event;
         }
     },
     graphiql: true
