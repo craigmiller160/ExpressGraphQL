@@ -104,7 +104,10 @@ app.use('/graphql', graphqlHttp({
         users: async (): Promise<IUser[]> => {
             try {
                 const users = await UserModel.find();
-                return users.map(cleanMongooseDoc);
+                return users.map((user) => ({
+                    ...cleanMongooseDoc(user),
+                    password: null
+                }));
             } catch (ex) {
                 console.log(ex); // tslint:disable-line no-console
                 throw ex;
@@ -112,6 +115,13 @@ app.use('/graphql', graphqlHttp({
         },
         createUser: async ({ userInput }: ICreateUserArgs): Promise<IUser> => {
             try {
+                const existingUser = await UserModel.findOne({
+                    email: userInput.email
+                });
+                if (existingUser) {
+                    throw new Error(`User exists already: ${userInput.email}`);
+                }
+
                 const passwordHash = await bcrypt.hash(userInput.password, saltRounds);
                 const user = new UserModel({
                     email: userInput.email,
@@ -119,7 +129,10 @@ app.use('/graphql', graphqlHttp({
                 });
 
                 const result: IUserModel = await user.save();
-                return cleanMongooseDoc(result);
+                return {
+                    ...cleanMongooseDoc(result),
+                    password: null
+                };
             } catch (ex) {
                 console.log(ex); // tslint:disable-line no-console
                 throw ex;
