@@ -5,6 +5,7 @@ import { buildSchema } from 'graphql';
 import mongoose from 'mongoose';
 import IEvent from './ts-types/Event.type';
 import IEventInput from './ts-types/EventInput.type';
+import trimWhitespace from './util/trimWhitespace';
 
 interface ICreateEventArgs {
     eventInput: IEventInput;
@@ -71,8 +72,18 @@ app.use('/graphql', graphqlHttp({
     graphiql: true
 }));
 
-mongoose.connect(`mongodb://${mongoUser}:${mongoPass}@localhost:27017/express_graphql?authSource=${mongoAuthDb}`, {
-    useNewUrlParser: true
-});
+(async () => {
+    const mongoConnectionString = `mongodb://
+            ${mongoUser}:${mongoPass}
+            @localhost:27017/express_graphql
+            ?authSource=${mongoAuthDb}`;
 
-app.listen(port);
+    try {
+        await mongoose.connect(trimWhitespace(mongoConnectionString), {
+            useNewUrlParser: true
+        });
+        app.listen(port);
+    } catch (ex) {
+        console.log(ex); // tslint:disable-line no-console
+    }
+})();
