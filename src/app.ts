@@ -38,6 +38,7 @@ const getUser = async (userId: string): Promise<IUser> => {
     const userResult = await UserModel.findById(userId);
     return {
         ...cleanMongooseDoc(userResult),
+        password: undefined,
         createdEvents: getEvents.bind(this, userResult._doc.createdEvents as string[])
     };
 };
@@ -46,7 +47,7 @@ const getEvents = async (eventIds: string[]): Promise<IEvent[]> => {
     const eventsResult = await EventModel.find({ _id: { $in: eventIds } });
     return eventsResult.map((event) => ({
         ...cleanMongooseDoc(event),
-        creator: undefined
+        creator: getUser.bind(this, event._doc.creator as string)
     }));
 };
 
@@ -64,7 +65,6 @@ app.use('/graphql', graphqlHttp({
         type User {
             _id: ID!
             email: String!
-            password: String
             createdEvents: [Event!]!
         }
         
