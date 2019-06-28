@@ -131,7 +131,10 @@ app.use('/graphql', graphqlHttp({
                 const eventResult: IEventModel = await event.save();
                 userResult.createdEvents.push(eventResult._doc._id.toString());
                 await userResult.save();
-                return cleanMongooseDoc(eventResult);
+                return {
+                    ...cleanMongooseDoc(eventResult),
+                    creator: getUser.bind(this, eventResult._doc.creator)
+                };
             } catch (ex) {
                 console.log(ex); // tslint:disable-line no-console
                 throw ex;
@@ -170,7 +173,7 @@ app.use('/graphql', graphqlHttp({
                 }
                 return {
                     ...cleanMongooseDoc(result),
-                    password: null
+                    password: undefined
                 };
             } catch (ex) {
                 console.log(ex); // tslint:disable-line no-console
