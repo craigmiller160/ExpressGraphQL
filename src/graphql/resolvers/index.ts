@@ -84,7 +84,8 @@ const rootResolver =  {
             const users: IUserModel[] = await UserModel.find();
             return users.map((user) => ({
                 ...cleanMongooseDoc(user),
-                password: null
+                password: null,
+                createdEvents: getEvents.bind(this, user._doc.createdEvents as string[])
             }));
         } catch (ex) {
             console.log(ex); // tslint:disable-line no-console
