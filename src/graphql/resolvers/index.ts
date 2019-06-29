@@ -30,6 +30,7 @@ const getEvents = async (eventIds: string[]): Promise<IEvent[]> => {
     const eventsResult = await EventModel.find({ _id: { $in: eventIds } });
     return eventsResult.map((event) => ({
         ...cleanMongooseDoc(event),
+        date: new Date(event._doc.date).toISOString(),
         creator: getUser.bind(this, event._doc.creator as string)
     }));
 };
@@ -40,6 +41,7 @@ const rootResolver =  {
             const events: IEventModel[] = await EventModel.find();
             return events.map((event) => ({
                 ...cleanMongooseDoc(event),
+                date: new Date(event._doc.date).toISOString(),
                 creator: getUser.bind(this, event._doc.creator as string)
             }));
 
@@ -72,6 +74,7 @@ const rootResolver =  {
             await userResult.save();
             return {
                 ...cleanMongooseDoc(eventResult),
+                date: new Date(eventResult._doc.date).toISOString(),
                 creator: getUser.bind(this, eventResult._doc.creator)
             };
         } catch (ex) {
