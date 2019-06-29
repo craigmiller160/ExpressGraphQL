@@ -1,6 +1,13 @@
 import { buildSchema, GraphQLSchema } from 'graphql';
 
 const schema: GraphQLSchema = buildSchema(`
+        type Booking {
+            event: Event!
+            user: User!
+            createdAt: String!
+            updatedAt: String!
+        }
+
         type Event {
             _id: ID!
             title: String!
