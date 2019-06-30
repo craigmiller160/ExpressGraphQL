@@ -6,7 +6,6 @@ import EventModel, { IEventModel } from '../../models/Event';
 import bcrypt from 'bcryptjs';
 import IEventInput from '../../ts-types/EventInput.type';
 import IUserInput from '../../ts-types/UserInput.type';
-import IBooking from '../../ts-types/Booking.type';
 import BookingModel, { IBookingModel } from '../../models/Booking';
 
 interface ICreateEventArgs {
