@@ -41,6 +41,15 @@ const getEvents = async (eventIds: string[]): Promise<IEvent[]> => {
     }));
 };
 
+const getEvent = async (eventId: string): Promise<IEvent> => {
+    const eventResult = await EventModel.findById(eventId);
+    return {
+        ...cleanMongooseDoc(eventResult),
+        date: new Date(eventResult._doc.date).toISOString(),
+        creator: getUser.bind(this, eventResult._doc.creator as string)
+    };
+};
+
 const rootResolver =  {
     events: async (): Promise<IEvent[]> => {
         try {
@@ -133,7 +142,9 @@ const rootResolver =  {
         try {
             const bookings: IBookingModel[] = await BookingModel.find();
             return bookings.map((booking) => ({
-                ...cleanMongooseDoc(booking)
+                ...cleanMongooseDoc(booking),
+                event: getEvent.bind(this, booking._doc.event as string),
+                user: getUser.bind(this, booking.user as string)
             }));
         } catch (ex) {
             console.log(ex); // tslint:disable-line no-console
@@ -152,7 +163,11 @@ const rootResolver =  {
                 event
             });
             const result = await booking.save();
-            return cleanMongooseDoc(result);
+            return {
+                ...cleanMongooseDoc(result),
+                event: getEvent.bind(this, result._doc.event as string),
+                user: getUser.bind(this, result._doc.user as string)
+            };
         } catch (ex) {
             console.log(ex); // tslint:disable-line no-console
             throw ex;
