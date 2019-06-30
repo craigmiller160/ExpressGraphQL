@@ -6,6 +6,8 @@ import EventModel, { IEventModel } from '../../models/Event';
 import bcrypt from 'bcryptjs';
 import IEventInput from '../../ts-types/EventInput.type';
 import IUserInput from '../../ts-types/UserInput.type';
+import IBooking from '../../ts-types/Booking.type';
+import BookingModel, { IBookingModel } from '../../models/Booking';
 
 interface ICreateEventArgs {
     eventInput: IEventInput;
@@ -13,6 +15,10 @@ interface ICreateEventArgs {
 
 interface ICreateUserArgs {
     userInput: IUserInput;
+}
+
+interface IBookEventArgs {
+    eventId: string
 }
 
 const saltRounds: number = Number(process.env.SALT_ROUNDS);
@@ -122,6 +128,38 @@ const rootResolver =  {
             console.log(ex); // tslint:disable-line no-console
             throw ex;
         }
+    },
+    bookings: async () => {
+        try {
+            const bookings: IBookingModel[] = await BookingModel.find();
+            return bookings.map(booking => ({
+                ...cleanMongooseDoc(booking)
+            }));
+        } catch (ex) {
+            console.log(ex); // tslint:disable-line no-console
+            throw ex;
+        }
+    },
+    bookEvent: async ({ eventId }: IBookEventArgs) => {
+        try {
+            const event = await EventModel.findById({ _id: eventId });
+            if (!event) {
+                throw new Error(`Unable to find event with ID: ${event}`);
+            }
+
+            const booking = new BookingModel({
+                user: global.defaultUserId,
+                event
+            });
+            const result = booking.save();
+            return cleanMongooseDoc(result);
+        } catch (ex) {
+            console.log(ex); // tslint:disable-line no-console
+            throw ex;
+        }
+    },
+    cancelBooking: async () => {
+
     }
 };
 
