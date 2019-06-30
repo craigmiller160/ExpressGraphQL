@@ -2,6 +2,7 @@ import { model, Schema } from 'mongoose';
 import IUser from '../ts-types/User.type';
 import { EVENT_MODEL, USER_MODEL } from './ModelNames';
 import IExtendedDocument from '../ts-types/ExtendedDocument.type';
+import { cleanBaseDoc } from './cleanDocs';
 
 export interface IUserModel extends IUser, IExtendedDocument<IUser> {}
 
@@ -23,3 +24,8 @@ const userSchema: Schema<IUserModel> = new Schema({
 });
 
 export default model<IUserModel>(USER_MODEL, userSchema);
+
+export const cleanUser = (user: IUserModel): IUser => ({
+    ...cleanBaseDoc(user),
+    password: undefined
+});

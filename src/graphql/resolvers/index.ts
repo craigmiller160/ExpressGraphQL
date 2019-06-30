@@ -1,12 +1,12 @@
 import IUser from '../../ts-types/User.type';
-import UserModel, { IUserModel } from '../../models/User';
+import UserModel, { cleanUser, IUserModel } from '../../models/User';
 import cleanMongooseDoc from '../../util/cleanMongooseDoc';
 import IEvent from '../../ts-types/Event.type';
-import EventModel, { IEventModel } from '../../models/Event';
+import EventModel, { cleanEvent, IEventModel } from '../../models/Event';
 import bcrypt from 'bcryptjs';
 import IEventInput from '../../ts-types/EventInput.type';
 import IUserInput from '../../ts-types/UserInput.type';
-import BookingModel, { IBookingModel } from '../../models/Booking';
+import BookingModel, { cleanBooking, IBookingModel } from '../../models/Booking';
 
 interface ICreateEventArgs {
     eventInput: IEventInput;
@@ -27,28 +27,25 @@ interface ICancelBookingArgs {
 const saltRounds: number = Number(process.env.SALT_ROUNDS);
 
 const getUser = async (userId: string): Promise<IUser> => {
-    const userResult = await UserModel.findById(userId);
+    const userResult: IUserModel = await UserModel.findById(userId);
     return {
-        ...cleanMongooseDoc(userResult),
-        password: undefined,
+        ...cleanUser(userResult),
         createdEvents: getEvents.bind(this, userResult._doc.createdEvents as string[])
     };
 };
 
 const getEvents = async (eventIds: string[]): Promise<IEvent[]> => {
-    const eventsResult = await EventModel.find({ _id: { $in: eventIds } });
-    return eventsResult.map((event) => ({
-        ...cleanMongooseDoc(event),
-        date: new Date(event._doc.date).toISOString(),
+    const eventsResult: IEventModel[] = await EventModel.find({ _id: { $in: eventIds } });
+    return eventsResult.map((event: IEventModel) => ({
+        ...cleanEvent(event),
         creator: getUser.bind(this, event._doc.creator as string)
     }));
 };
 
 const getEvent = async (eventId: string): Promise<IEvent> => {
-    const eventResult = await EventModel.findById(eventId);
+    const eventResult: IEventModel = await EventModel.findById(eventId);
     return {
-        ...cleanMongooseDoc(eventResult),
-        date: new Date(eventResult._doc.date).toISOString(),
+        ...cleanEvent(eventResult),
         creator: getUser.bind(this, eventResult._doc.creator as string)
     };
 };
@@ -57,9 +54,8 @@ const rootResolver =  {
     events: async (): Promise<IEvent[]> => {
         try {
             const events: IEventModel[] = await EventModel.find();
-            return events.map((event) => ({
-                ...cleanMongooseDoc(event),
-                date: new Date(event._doc.date).toISOString(),
+            return events.map((event: IEventModel) => ({
+                ...cleanEvent(event),
                 creator: getUser.bind(this, event._doc.creator as string)
             }));
 
@@ -91,8 +87,7 @@ const rootResolver =  {
             userResult.createdEvents.push(eventResult._doc._id.toString());
             await userResult.save();
             return {
-                ...cleanMongooseDoc(eventResult),
-                date: new Date(eventResult._doc.date).toISOString(),
+                ...cleanEvent(eventResult),
                 creator: getUser.bind(this, eventResult._doc.creator)
             };
         } catch (ex) {
@@ -103,9 +98,8 @@ const rootResolver =  {
     users: async (): Promise<IUser[]> => {
         try {
             const users: IUserModel[] = await UserModel.find();
-            return users.map((user) => ({
-                ...cleanMongooseDoc(user),
-                password: null,
+            return users.map((user: IUserModel) => ({
+                ...cleanUser(user),
                 createdEvents: getEvents.bind(this, user._doc.createdEvents as string[])
             }));
         } catch (ex) {
@@ -132,10 +126,7 @@ const rootResolver =  {
             if (!global.defaultUserId) {
                 global.defaultUserId = result._doc._id.toString();
             }
-            return {
-                ...cleanMongooseDoc(result),
-                password: undefined
-            };
+            return cleanUser(result);
         } catch (ex) {
             console.log(ex); // tslint:disable-line no-console
             throw ex;
@@ -144,8 +135,8 @@ const rootResolver =  {
     bookings: async () => {
         try {
             const bookings: IBookingModel[] = await BookingModel.find();
-            return bookings.map((booking) => ({
-                ...cleanMongooseDoc(booking),
+            return bookings.map((booking: IBookingModel) => ({
+                ...cleanBooking(booking),
                 event: getEvent.bind(this, booking._doc.event as string),
                 user: getUser.bind(this, booking.user as string)
             }));
@@ -156,7 +147,7 @@ const rootResolver =  {
     },
     bookEvent: async ({ eventId }: IBookEventArgs) => {
         try {
-            const event = await EventModel.findById({ _id: eventId });
+            const event: IEventModel = await EventModel.findById({ _id: eventId });
             if (!event) {
                 throw new Error(`Unable to find event with ID: ${event}`);
             }
@@ -165,9 +156,9 @@ const rootResolver =  {
                 user: global.defaultUserId,
                 event
             });
-            const result = await booking.save();
+            const result: IBookingModel = await booking.save();
             return {
-                ...cleanMongooseDoc(result),
+                ...cleanBooking(booking),
                 event: getEvent.bind(this, result._doc.event as string),
                 user: getUser.bind(this, result._doc.user as string)
             };
@@ -181,7 +172,7 @@ const rootResolver =  {
             const booking = await BookingModel.findById(bookingId).populate('event');
             await BookingModel.deleteOne({ _id: bookingId });
             return {
-                ...cleanMongooseDoc(booking.event as IEventModel),
+                ...cleanEvent(booking.event as IEventModel),
                 date: new Date((booking.event as IEventModel)._doc.date).toISOString(),
                 creator: getUser.bind(this, (booking.event as IEventModel)._doc.creator as string)
             };

@@ -2,6 +2,7 @@ import { Schema, model } from 'mongoose';
 import IExtendedDocument from '../ts-types/ExtendedDocument.type';
 import IBooking from '../ts-types/Booking.type';
 import { BOOKING_MODEL, EVENT_MODEL, USER_MODEL } from './ModelNames';
+import { cleanBaseDoc, cleanMongooseTimestamps } from './cleanDocs';
 
 export interface IBookingModel extends IBooking, IExtendedDocument<IBooking> { }
 
@@ -19,3 +20,8 @@ const bookingSchema: Schema<IBookingModel> = new Schema({
 });
 
 export default model<IBookingModel>(BOOKING_MODEL, bookingSchema);
+
+export const cleanBooking = (booking: IBookingModel): IBooking => ({
+    ...cleanBaseDoc(booking),
+    ...cleanMongooseTimestamps(booking)
+});
