@@ -151,7 +151,7 @@ const rootResolver =  {
                 user: global.defaultUserId,
                 event
             });
-            const result = booking.save();
+            const result = await booking.save();
             return cleanMongooseDoc(result);
         } catch (ex) {
             console.log(ex); // tslint:disable-line no-console
