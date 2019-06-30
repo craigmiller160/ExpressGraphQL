@@ -184,7 +184,7 @@ const rootResolver =  {
                 ...cleanMongooseDoc(booking.event as IEventModel),
                 date: new Date((booking.event as IEventModel)._doc.date).toISOString(),
                 creator: getUser.bind(this, (booking.event as IEventModel)._doc.creator as string)
-            }
+            };
         } catch (ex) {
             console.log(ex); // tslint:disable-line no-console
             throw ex;
