@@ -18,7 +18,7 @@ interface ICreateUserArgs {
 }
 
 interface IBookEventArgs {
-    eventId: string
+    eventId: string;
 }
 
 const saltRounds: number = Number(process.env.SALT_ROUNDS);
@@ -132,7 +132,7 @@ const rootResolver =  {
     bookings: async () => {
         try {
             const bookings: IBookingModel[] = await BookingModel.find();
-            return bookings.map(booking => ({
+            return bookings.map((booking) => ({
                 ...cleanMongooseDoc(booking)
             }));
         } catch (ex) {
@@ -159,7 +159,7 @@ const rootResolver =  {
         }
     },
     cancelBooking: async () => {
-
+        throw new Error('Finish this');
     }
 };
 
